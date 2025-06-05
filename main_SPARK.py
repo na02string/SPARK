@@ -61,7 +61,7 @@ def get_SPARK_result(args, model, data, uid, iid):
         print(f"{hops} hop / valid_paths: {len(valid_paths)}, total_paths: {len(paths)}")
         save_path[hops] = BeamSearch.path2linearlize(valid_paths, to_original_name=True)
         # path2linearlize : 추출한 경로를 문자열로 바꿈. => LLM 입력용
-# 💡 hop들을 모두 탐색한 후, 어떤 hop에서도 valid path가 없으면 설명 스킵
+# hop들을 모두 탐색한 후, 어떤 hop에서도 valid path가 없으면 설명 스킵
     if not save_path:
         print("[SKIP] No valid paths found for any hop — skipping explanation.")
         return None
@@ -119,7 +119,7 @@ def get_SPARK_result(args, model, data, uid, iid):
     print(f"[DEBUG]item opinion : {opinions}")
     explanation = llm_response(args, IC2explanation_formatted)
     print(f"[DEBUG] Prompt : {IC2explanation_formatted}")
-    # ✅ 로그 기록 추가
+    # 로그 기록 추가
     import logging
     logging.info(f"[PROMPT] LLM Input Prompt for uid={uid}, iid={iid}:\n{IC2explanation_formatted}")
 
