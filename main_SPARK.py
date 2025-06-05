@@ -28,12 +28,12 @@ def get_SPARK_result(args, model, data, uid, iid):
     """
     # user uid 와 아이템 iid에 대해 추천 설명을 생성하는 함수. 
 
-    # 1단계: 사용자 리뷰 기반 선호 Aspect 추출
+    # 사용자 리뷰 기반 선호 Aspect 추출
     aspect_score_dict = extract_user_aspects(args, data, uid)
-    # 🆕  NodeAspectMapper 캐시 객체
+    #  NodeAspectMapper 캐시 객체
     node_mapper = NodeAspectMapper(cache_path="cache/node_aspect_cache.jsonl")
 
-    # 2단계: BeamSearch 객체 생성 (aspect score + mapper + λ 반영)
+    # BeamSearch 객체 생성 (aspect score + mapper + λ 반영)
     BeamSearch = CollaborativeBeamSearchWithAspect(
                     data=data,
                     model=model,
@@ -44,7 +44,7 @@ def get_SPARK_result(args, model, data, uid, iid):
                     args = args
                 )
 
-    # 3단계: 추천 경로 탐색
+    # 추천 경로 탐색
     save_path = {}
     
     # 다양한 hop 수 에 대해 추천 경로 추출. -> 3,5 로 설정해둠
@@ -77,11 +77,9 @@ def get_SPARK_result(args, model, data, uid, iid):
         #  'A2B73CL3QSYWLB -> user_likes_item -> 1927_films -> attribute_is_subject_of_item: -> The_Beloved_Rogue -> item_has_subject_as_attribute: -> 1920s_historical_adventure_films']
     selected_path_str = '\n'.join(selected_path)
 
-    # 5단계: LLM 기반 IC 요약 생성    
-    # 첫번째 LLM 입력 생성(IC 요약 요청)
     item_information=BeamSearch.item_information(iid,max_relations=5) # item에 대한 기본 정보랑
     user_history = BeamSearch.user_history(uid, max_items=5, max_lines=10) # user가 이전에 본 item 요약(user_history)를 불러와서 
-    # === 6 단계: KG evidence 생성 ===
+    # KG evidence 생성 
     kg_evi = build_kg_evidence(
                 args=args,
                 paths=selected_path,   # 경로 문자열만
@@ -90,7 +88,7 @@ def get_SPARK_result(args, model, data, uid, iid):
                 node_mapper=node_mapper
             )
 
-    # === 7 단계: item opinion 추출 ===
+    # item opinion 추출
     opinions = []
     ic_json = []
     for asp, evid_list in kg_evi.items():
@@ -105,7 +103,7 @@ def get_SPARK_result(args, model, data, uid, iid):
         })
         ic_json.sort(key=lambda x: -x["aspect_score"]) # 점수 높은 순으로 정렬
 
-    # === 5‑단계: LLM 설명 생성 ===
+    #  LLM 설명 생성 
     IC2explanation_formatted = aspect_SPARK_Prompt.aspect_explanation_prompt.format(
                                     context=json.dumps(ic_json, ensure_ascii=False, indent=2),
                                     user=data.user_id2org[uid],
